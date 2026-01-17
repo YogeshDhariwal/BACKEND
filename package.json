@@ -1,20 +1,20 @@
 {
-  "name": "backendwithchai",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "a basic app to deploy",
+  "description": "a backend creation with chai and code",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "node",
+    "javascript",
+    "backend",
     "chai"
   ],
-  "author": "yogesh dhariwal",
+  "author": "Yogesh Dhariwal",
   "license": "ISC",
-  "dependencies": {
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1"
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.0"
   }
 }
