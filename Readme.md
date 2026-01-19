@@ -4,4 +4,4 @@ The backend creation is done with the help of chai and code youtube channel. Mod
 
 prettier is used to make code same as your other colleague such as usage of ; and spaces
   npm i -D prettier  
-used to install it
+used to install it 
