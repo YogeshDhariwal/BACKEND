@@ -15,6 +15,9 @@ app.use(express.urlencoded({ extended: true,limit: '10kb' })) // for parsing app
 app.use(express.static("public")) // for public assets like images ,css files ,js files etc
 
 // cookies parser middleware is used to parse cookies from the request headers
+/**cookie-parser is an Express middleware used to parse cookies from incoming HTTP requests and make them accessible via req.cookies. It is commonly used for authentication, session handling, and reading JWT tokens stored in cookies.
+ * 
+ */
 app.use(cookieParser());
 
 export {app};
