@@ -1,6 +1,6 @@
 // require(dotenv).config()  // for commonjs
 import dotenv from 'dotenv' // for es6 module
-
+import { app } from './app.js';
 import connectDB from "./db/index.js";
   
 dotenv.config({

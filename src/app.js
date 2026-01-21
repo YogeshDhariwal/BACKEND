@@ -18,6 +18,15 @@ app.use(express.static("public")) // for public assets like images ,css files ,j
 /**cookie-parser is an Express middleware used to parse cookies from incoming HTTP requests and make them accessible via req.cookies. It is commonly used for authentication, session handling, and reading JWT tokens stored in cookies.
  * 
  */
+
 app.use(cookieParser());
 
+// routes import 
+
+import userRoutes from './routes/user.routes.js';
+
+//routes declaration
+app.use('/api/v1/users',userRoutes)
+
+// the url looks like http://localhost:5000/api/v1/users/register 
 export {app};
