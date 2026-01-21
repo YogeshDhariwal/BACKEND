@@ -85,9 +85,9 @@ const userSchema = new mongoose.Schema(
 
 // we only want this code to run when password is modified
     userSchema.pre("save",async function (next){
-        if(!this.isModified("password")) return next();   
+        if(!this.isModified("password")) return ;   
         this.password = await bcrypt.hash(this.password,10)
-        next()
+       
     })
 
     // checks the password this.password encrypted == password user given return true or false

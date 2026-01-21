@@ -1,7 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import  {ApiErrors} from "../utils/ApiErrors.js";
+import  { ApiErrors } from "../utils/ApiErrors.js";
 import { User } from "../models/user.model.js";
 import {uploadOnCloudinay} from "../utils/cloudinary.js"
+import { ApiResponse } from "../utils/ApiResponse.js";
+
 const registerUser = asyncHandler(async (req,res)=>{
    /*1.get user details from frontend (using postman or frontend app)
      2. validation - not empty
@@ -16,7 +18,7 @@ const registerUser = asyncHandler(async (req,res)=>{
 
   const {userName,email,fullName,password} = req.body
     console.log('email',email);
-    clog('req body',req.body);
+    console.log('req body',req.body);
     // step 2
     if(
         [userName,email,fullName,password].some((field)=>
@@ -45,7 +47,7 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new ApiErrors(400,"Avatar is required");
     }
   
-    console.log('request file',req.file);
+    console.log('request file',req.files);
     
     // step 5 upload on cloudinary
   
@@ -56,8 +58,8 @@ const registerUser = asyncHandler(async (req,res)=>{
   }
 
   // step 6 
-   User.create({
-    userName:userName.tolowercase(),
+ const user = await  User.create({
+    userName:userName.toLowerCase(),
     fullName,
     avatar:avatar.url,
     coverImage: coverImage?.url || "",
@@ -65,6 +67,19 @@ const registerUser = asyncHandler(async (req,res)=>{
     password,
    })
 
+   // checking if user is created or not and removing password and refreshtoken field
+const createdUser =  await User.findById(user._id).select(
+    "-password -refreshToken" 
+)
+
+if(!createdUser){
+    throw new ApiErrors(500,"Something went wrong while registering the user")
+}
+
+//  return response
+   return res.status(201).json(
+    new ApiResponse(201,createdUser,"Registered Successfully")
+   )
 })
 
 

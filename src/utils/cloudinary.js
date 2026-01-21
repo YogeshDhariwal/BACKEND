@@ -21,7 +21,19 @@ const uploadOnCloudinay = async (localFilePath)=>{
         resource_type:"auto"
       })
       // file has been uploaded succesfully
-      console.log('File has been uploaded on cloudinary succesfully',response.url);
+
+    /**   console.log('File has been uploaded on cloudinary succesfully',response.url);
+   console.log('response',response);
+    secure_url → show file
+      public_id → manage file
+      bytes → size
+      width/height → optimization
+      resource_type → correct API usage
+      signature → differnt from the signature used in jwt (It Verify upload)
+    */
+   
+    fs.unlinkSync(localFilePath)  // if sucessfull upload then remove files
+
       return response;
     } catch (error) {
         fs.unlinkSync(localFilePath)   // remove the locally saved temporary files as the upload operation is failed
