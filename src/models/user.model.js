@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
         trim:true,
         index:true,
        },
-       userEmail:{
+       email:{
         type:String,
         required:true,
         unique:true,
@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema(
 // we only want this code to run when password is modified
     userSchema.pre("save",async function (next){
         if(!this.isModified("password")) return next();   
-        this.password = bcrypt.hash(this.password,10)
+        this.password = await bcrypt.hash(this.password,10)
         next()
     })
 
