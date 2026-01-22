@@ -17,8 +17,8 @@ const registerUser = asyncHandler(async (req,res)=>{
      10. yes send response, no send error   */
 
   const {userName,email,fullName,password} = req.body
-    console.log('email',email);
-    console.log('req body',req.body);
+ //   console.log('email',email);
+ //   console.log('req body',req.body);
     // step 2
     if(
         [userName,email,fullName,password].some((field)=>
@@ -36,18 +36,24 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new ApiErrors(409,"User already exists");
     }
      
-    console.log('existed user',existedUser);
+   //  console.log('existed user',existedUser);
 
 // step 4
    
     const avatarLocalPath = req.files?.avatar[0]?.path; // gives actual path of the file stored in local storage by multer
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+ 
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+      coverImageLocalPath = req.files.coverImage[0].path
+    }
+    
 
     if(!avatarLocalPath){
         throw new ApiErrors(400,"Avatar is required");
     }
   
-    console.log('request file',req.files);
+   // console.log('request file',req.files);
     
     // step 5 upload on cloudinary
   
@@ -62,7 +68,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     userName:userName.toLowerCase(),
     fullName,
     avatar:avatar.url,
-    coverImage: coverImage?.url || "",
+    coverImage: coverImage?.url || " ",
     email,
     password,
    })

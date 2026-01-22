@@ -13,9 +13,7 @@ import fs from  'fs'
   // we get file from the local system and upload to cloudinary and if the upload is successful we delete the file from local system
 const uploadOnCloudinay = async (localFilePath)=>{
     try {
-      if(!localFilePath){
-        throw new Error ("File path is required")
-      }  
+      if(!localFilePath) return null
       // upload the file on cloudinary
     const response= await cloudinary.uploader.upload(localFilePath,{
         resource_type:"auto"
