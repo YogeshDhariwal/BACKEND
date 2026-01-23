@@ -95,7 +95,9 @@ const userSchema = new mongoose.Schema(
      return await bcrypt.compare(password,this.password)  
     }
 
-    // GENERATING ACCESS TOKEN
+    // GENERATING ACCESS TOKEN (short lived)
+    // Access token = access APIs
+    // Refresh token = renew access
     userSchema.methods.generateAccessToken = function(){
         // PAYLOAD
      return  jwt.sign({
@@ -111,7 +113,7 @@ const userSchema = new mongoose.Schema(
     )
     }
 
-    // GENRATING REFRESH TOKEN
+    // GENRATING REFRESH TOKEN (long lived) {user not alaways have to authenticate himself but user have refresh token and also stored in db if they matches after user hits a endpoint then it gets access of resource and new access token is generated }
     userSchema.methods.generateRefreshToken = function(){
         return  jwt.sign({
             _id:this._id,
