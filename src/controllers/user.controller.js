@@ -346,36 +346,175 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         { new: true }
     ).select("-password")
 
-     return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"Avatar Image updated successfully")
-    )
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, "Avatar Image updated successfully")
+        )
 
 })
 
 // cover image update
-const updateUserCoverImage = asyncHandler(async (req,res)=>{
+const updateUserCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.body?.path
-    if(!coverImageLocalPath){
-        throw new ApiErrors(400,"Cover image not found")
+    if (!coverImageLocalPath) {
+        throw new ApiErrors(400, "Cover image not found")
     }
 
     const coverImage = await uploadOnCloudinay(coverImageLocalPath)
-    if(!coverImage.url){
-        throw new ApiErrors(400,"ERROR while uploading Cover image ")
+    if (!coverImage.url) {
+        throw new ApiErrors(400, "ERROR while uploading Cover image ")
     }
-  const user = await User.findByIdAndUpdate(req.user?._id,
-        {$set:{coverImage : coverImage.url}},
-        {new:true}
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        { $set: { coverImage: coverImage.url } },
+        { new: true }
     ).select("-password")
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, "Cover Image updated successfully")
+        )
+})
+
+// user channel  profile
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    const { userName } = req.params
+    if (!userName?.trim()) {
+        throw new ApiErrors(400, "User not found")
+    }
+
+    const channel = await User.aggregate([
+        /** pipeline for finding the account/like a channel  */
+        {
+            $match: {
+                userName: userName?.toLowerCase()
+            }
+        },
+        /** used to find document which gives the information about the  total subscriber */
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "Total Subscribers"
+            }
+        },
+        /** used to find the document which gives the document as total account you subscribed */
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "Subscribed by you"
+            }
+        },
+        /** gives count of total sunbsccriber and subscribed and info about showing true if subscribed by a user or not */
+        {
+            $addFields: {
+                subscriberCount: {
+                    $size: "$Total Subscribers"
+                },
+                subscribedByYouCount: {
+                    $size: "$Subscribed by you"
+                },
+                isSubscribed:{
+                    $cond: {
+                        if:{$in: [req.user?._id,"$Total Subscribers.subscriber"]},
+                        then:true,
+                        else:false
+                    }
+                }
+            }
+        },
+        /** shows which is necessary  */
+        {
+            $project:{
+                fullName: 1,
+                userName: 1,
+                subscriberCount:1,
+                subscribedByYouCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+        }
+    }
+    ])
+
+    if(!channel?.length){
+    throw new ApiErrors(400,"No Such User Exists")
+   }
+
+   return res
+   .status(200)
+   .json(
+    new ApiResponse(200,channel[0],"User Channel fetched successfully")
+   )
+
+})
+
+//User Watch History
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {
+            /** we get a string of id and then mongoose convert it into objectid of user
+             * finding user by id   1.stage*/
+            
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        /** 2.stage finding the documentd which have same vedio id in user schema as in watch history and id in video schema */
+        {
+            $lookup:{
+                from: "videos",
+                localField:"watchHistory",
+                foreignField: "_id",
+                as:"watchHistory",
+                /** sub pipelines used because we don't know about owner field so we use another lookup
+                 * with the user schema to find about owner
+                */
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                           foreignField: "_id",
+                           as:"owner",
+                           /** another sub pipeline used to show the listed fileds only */
+                           pipeline:[
+                            {
+                                $project:{
+                                    fullName:1,
+                                    userName:1,
+                                    avatar:1
+                                }
+                            }
+                           ]
+                        }
+                    },
+                    /**3.stage  modify the ownenr details in a field called owner details and get the first value in a array */
+                    {
+                        $addFields:{
+                            ownerDetails:{
+                               $arrayElementAt:["$owner",0] 
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+    ])
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200,user,"Cover Image updated successfully")
+        new ApiResposne(200,user[0].watchHistory,"Watch History fetched successfully")
     )
 })
+
+
 export {
     registerUser,
     loginUser,
@@ -386,4 +525,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 };

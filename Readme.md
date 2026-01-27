@@ -53,4 +53,22 @@ Basic set of operation that can be used to interact with server
  - 400 Bad request , 401 unauthorized , 402 - Payment reqired , 404 Not found
  - 500 Internal Server Error , 504 - Gateway time out
 
+ # Aggregation Pipelines
+ It is a process of processing mongoDb documnets at different stages and at each stages output of previous state works as the input of the next stage means it only process the data coming from the previous stages
+
+ # Some Pipelines :
+ - $match (1 Stage) : Generally first pipeline used is $match.It used to find the filtering document from the database.Reduce the area for working on documents ,redeuce complexity.
+
+ - $lookup : Used for join data from two collections(tabel)
+
+ - $addFields : Used for adding or modifys the extra fiedls in the documents without removing existing fields
+
+ - $project: Used for project the specific fields in a document(rename,add,delete,create)
+ - $first: Return the first element  in a group based on pipeline orde
+ - $cond :Apply conditional logic (if / then / else) in aggregation.
+ - $size : returns the number of elements in an array field.
+ - $count : counting the no. of documents at the stage
+ - $arrayElementAt : Return the  object of array Example: $arrayElementAt :["author",0] gives first object
+
+
 
