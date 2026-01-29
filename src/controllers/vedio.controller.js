@@ -1,14 +1,14 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { Vedio } from "../models/video.model.js"
+import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 import { ApiErrors } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinay } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose, { set } from "mongoose";
 
-/** get all vedios */
-const getAllVedios = asyncHandler(async(req,res)=>{
+/** get all Videos */
+const getAllVideos = asyncHandler(async(req,res)=>{
    const { page=1, limit=10,query,sortBy,sortType,userId} = req.query
    // now get all videos based on query,sort,pagination
 
@@ -17,23 +17,23 @@ const getAllVedios = asyncHandler(async(req,res)=>{
    const limitNumber= Number(limit)
    const skip = (pageNumber-1)*limitNumber
 
-   /** checking if vedio is available to public or not */
+   /** checking if Video is available to public or not */
    const matchStage = {
     isPublished:true,
    }
 
    if(matchStage.isPublished==false){
-    throw new ApiErrors(400,"This vedio is not public is accessed by members only")
+    throw new ApiErrors(400,"This Video is not public is accessed by members only")
    }
 
-   /** seraching a vedio by title or description */
+   /** seraching a Video by title or description */
    if(query){
     matchStage.$or = [{videoTitle:{$regex:query,$options:'i'}},
         {description:{$regex:query,$options:'i'}}
     ]
    }
   
-   /**  searching vedio by userId */
+   /**  searching Video by userId */
   if(userId){
     matchStage.owner=new mongoose.Types.ObjectId(userId)
   }
@@ -43,15 +43,15 @@ const getAllVedios = asyncHandler(async(req,res)=>{
     [sortBy] : sortType==="asc"?1:-1
   }
 
-  /**pipeline for vedio */
-  const vedios = await Vedio.aggregate([
+  /**pipeline for Video */
+  const videos = await Video.aggregate([
     /** stage 1 match */
     {
-        /** matches all vedios which are publically available */
+        /** matches all Videos which are publically available */
         $match:matchStage
       
     },
-    /** stage 2 for joining two collection user and vedio on basis of owner as localfield and user _id as forgeign field as store the documents in owner field we get after compare user id and owner id 
+    /** stage 2 for joining two collection user and Video on basis of owner as localfield and user _id as forgeign field as store the documents in owner field we get after compare user id and owner id 
      * it gives all the info store in document where user _id ==owner id and project only fullname,username,avatar
     */
     {
@@ -86,63 +86,103 @@ const getAllVedios = asyncHandler(async(req,res)=>{
     /** facet is used for doing pagination and counting the document using a single pipeline */
     {
         $facet:{
-            vedios:[{$skip:skip},{$limit:limitNumber}],
+            Videos:[{$skip:skip},{$limit:limitNumber}],
             totalCount:{$count:"count"}
         }
     }
   ])
-  const totalVedios = vedios[0].totalCount[0]?.count || 0
-  const totalPage = Math.ceil(totalVedios/limitNumber) 
+  const totalVideos = videos[0].totalCount[0]?.count || 0
+  const totalPage = Math.ceil(totalVideos/limitNumber) 
   
   return res
   .status(200)
   .json(
     new ApiResponse(
         200,
-        [vedios[0],totalVedios,totalPage],
-        "All vedios fatched successfully"
+        [videos[0],totalVideos,totalPage],
+        "All Videos fatched successfully"
     )
   )
 
 })
 
-/** publish vedio  */
-const publishVedio = asyncHandler(async(req,res)=>{
-    const {vedioTitle,description}=req.body
-    /** get vedio,upload on cloudinary,create vedio */
-    const vedioLocalPath=req.files?.vedioFile[0]?.path
-    if(!vedioLocalPath){
-        throw new ApiErrors(400,"The vedio file doesn't exists")
+/** publish Video  */
+const publishVideo = asyncHandler(async(req,res)=>{
+    const {videoTitle,description}=req.body
+    /** get Video,upload on cloudinary,create Video */
+    const videoLocalPath=req.files?.videoFile[0]?.path
+    if(!videoLocalPath){
+        throw new ApiErrors(400,"The Video file doesn't exists")
     }
 
-    const vedio = await uploadOnCloudinay(vedioLocalPath)
-    if(!vedio){
-        throw new ApiErrors(400,"Vedio is required")
+    const video = await uploadOnCloudinay(videoLocalPath)
+    if(!video){
+        throw new ApiErrors(400,"Video is required")
     }
 
-    const vedioDocument= await Vedio.create({
-       vedioTitle,
+    const videoDocument= await Video.create({
+       videoTitle,
        description,
-       vedio:vedio.url,
+       video:video.url,
     })
-    /** checking vedio uploaded succesfully or not */
-    if(!vedioDocument){
-        throw new ApiErrors(500,"something went working while creating vedio")
+    /** checking Video uploaded succesfully or not */
+    if(!videoDocument){
+        throw new ApiErrors(500,"something went working while creating Video")
+    }
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,videoDocument,"Video is uploaded and saved in DB successfully")
+    )
+})
+
+/** get vedio By Id */
+const getVedioById = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+
+    const video = await Video.findById(videoId)
+    if(!video){
+       throw new ApiErrors(404,"This vedio doesn't exist")
     }
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200,createdVedio,"vedio is uploaded and saved in DB successfully")
+        new ApiResponse(200,video,"Video feteched successfully")
     )
 })
+/** update Video */
+ const updateVideo = asyncHandler(async(req,res)=>{
+    const {videoId} =req.params
+    /** update Video details like title,description,thumbnail */
+    const {videoTitle,description,thumbnail}=req.body
+    if(!videoTitle && ! description && !thumbnail){
+     throw new ApiErrors(401,"Atlest one field must be updated")
+    }
+    const video=await Video.findByIdAndUpdate(
+       videoId,
+        {
+     $set:{videoTitle,description,thumbnail}
+        },
+        {new:true}
+    )
+  if(!video){
+    throw new ApiErrors(404,"The Video is not found")
+  }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,video,"Video details updated successfully")
+    )
+ })
 
 
-/** update vedio */
-/** find vedio */
-/** delete vedio */
+/** find Video */
+/** delete Video */
 
 export {
-    getAllVedios,
-    publishVedio
+    getAllVideos,
+    publishVideo,
+    updateVideo
 }
