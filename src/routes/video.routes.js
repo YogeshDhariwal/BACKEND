@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { deletedVideo, getAllVideos, getVideoById, publishVideo, updateVideo } from "../controllers/vedio.controller";
-import { verifyJwt } from "../middlewares/auth.middleware";
-import { upload } from "../middlewares/multer.middleware";
+import { deleteVideo,
+     getAllVideos,
+      getVideoById, publishVideo, updateVideo } from "../controllers/vedio.controller.js";
+import { verifyJwt } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router =Router();
 router.use(verifyJwt)   // apply verify middleware to all routes
@@ -18,6 +20,7 @@ router.route("/allvideo").get(getAllVideos).post(upload.fields([
 router
 .route("/:videoId")
 .get(getVideoById)
-.delete(deletedVideo)
+.delete(deleteVideo)
 .patch(upload.single("thumbnail",updateVideo))
 
+export default router

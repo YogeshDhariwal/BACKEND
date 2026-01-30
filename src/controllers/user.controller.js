@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinay } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from 'mongoose'
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
@@ -116,7 +117,7 @@ const loginUser = asyncHandler(async (req, res) => {
      * check user exist in db or not
      *  compare the hash password
      * store refresh token,access token in db
-     *  send response tokens (Access,Refresh) in cookies
+     *  send response tokens (Access,Refresh) in cookie
      */
 
     // step 1
@@ -146,9 +147,9 @@ const loginUser = asyncHandler(async (req, res) => {
     // step 5 run generateaccessandrefreshtoken method
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id)
 
-    // send tokens in form of cookies
+    // send tokens in form of cookie
     //we can not send password to user and refresh token in response body
-    // Refresh token send in onllt httponly cookies to protect token from theft
+    // Refresh token send in onllt httponly cookie to protect token from theft
 
     const loggedInUser = await User.findById(user._id).
         select("-password -refreshToken")
@@ -176,14 +177,14 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
     /* 1. Authenticate user( verify jwt access token)
        2. Remove refreshToken from db
-       3. remove cookies form user
+       3. remove cookie form user
        4.logout succesfully
     */
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1 // this removes the field from document
             }
         },
         {
@@ -194,7 +195,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
     }
-    // clear cookies
+    // clear cookie
     return res
         .status(200)
         .clearCookie("accessToken", options)
@@ -204,7 +205,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // REFRESHING ACCESS TOKEN
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    // get refresh token from cookies
+    // get refresh token from cookie
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
     if (!incomingRefreshToken) {
@@ -237,8 +238,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const { accessToken, newRefreshToken } = await generateAccessTokenAndRefreshToken(user._id)
 
         return res.status(200)
-            .cookies("refreshToken", newRefreshToken, options)
-            .cookies("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .cookie("accessToken", accessToken, options)
             .json(
                 new ApiResponse(200,
                     {
@@ -336,7 +337,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiErrors(500, "ERROR while uploading avatar")
     }
 
-    await User.findByIdAndUpdate(
+  const user= await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -349,7 +350,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new ApiResponse(200, user, "Avatar Image updated successfully")
+            new ApiResponse(200,user, "Avatar Image updated successfully")
         )
 
 })
@@ -498,7 +499,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
                     {
                         $addFields:{
                             ownerDetails:{
-                               $arrayElementAt:["$owner",0] 
+                               $arrayElemAt:["$owner",0] 
                             }
                         }
                     }

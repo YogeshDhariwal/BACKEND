@@ -138,12 +138,16 @@ const publishVideo = asyncHandler(async(req,res)=>{
 })
 
 /** get vedio By Id */
-const getVedioById = asyncHandler(async(req,res)=>{
+const getVideoById = asyncHandler(async(req,res)=>{
     const {videoId} = req.params
+
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiErrors(400,"Invalid video Id")
+    }
 
     const video = await Video.findById(videoId)
     if(!video){
-       throw new ApiErrors(404,"This vedio doesn't exist")
+       throw new ApiErrors(404,"This video doesn't exist")
     }
 
     return res
@@ -177,12 +181,32 @@ const getVedioById = asyncHandler(async(req,res)=>{
     )
  })
 
-
-/** find Video */
 /** delete Video */
+const deleteVideo = asyncHandler(async(req,res)=>{
+    const {videoId}= req.params
+    
+     if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiErrors(400, "Invalid video ID")
+    }
+    
+    /** find video by id and then delete */
+   const video = await Video.findById(videoId)
+   if(!video){
+    throw new ApiErrors(405,"Video not found")
+   }
+   
+  await video.deleteOne()
+   return res
+   .status(200)
+   .json(
+    new ApiResponse(200,{},"video is deleted succesfully")
+   )
+})
 
 export {
     getAllVideos,
     publishVideo,
-    updateVideo
+    getVideoById,
+    updateVideo,
+    deleteVideo
 }
