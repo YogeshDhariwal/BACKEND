@@ -19,11 +19,7 @@ const getAllVideos = asyncHandler(async(req,res)=>{
 
    /** checking if Video is available to public or not */
    const matchStage = {
-    isPublished:true,
-   }
-
-   if(matchStage.isPublished==false){
-    throw new ApiErrors(400,"This Video is not public is accessed by members only")
+   isPublished:true,
    }
 
    /** seraching a Video by title or description */
@@ -59,9 +55,8 @@ const getAllVideos = asyncHandler(async(req,res)=>{
         from:"users",
         localField:"owner",
         foreignField:"_id",
-        as:"owner"
-     },
-     pipeline:[
+        as:"owner",
+          pipeline:[
         {
             $project:{
             fullName:1,
@@ -70,12 +65,13 @@ const getAllVideos = asyncHandler(async(req,res)=>{
         }
     }
      ]
+     },
     },
     /** stage 3 we know that second stage  return array and arr[0] which is of our use*/
     {
     $addFields:{
      ownerDetails:{
-        $arrayElementAt:["$owner",0]
+        $arrayElemAt:["$owner",0]
      }
     }
     },
@@ -87,7 +83,7 @@ const getAllVideos = asyncHandler(async(req,res)=>{
     {
         $facet:{
             Videos:[{$skip:skip},{$limit:limitNumber}],
-            totalCount:{$count:"count"}
+            totalCount:[{$count:"count"}]
         }
     }
   ])
@@ -108,22 +104,33 @@ const getAllVideos = asyncHandler(async(req,res)=>{
 
 /** publish Video  */
 const publishVideo = asyncHandler(async(req,res)=>{
-    const {videoTitle,description}=req.body
+    const {videoTitle,description,duration}=req.body
     /** get Video,upload on cloudinary,create Video */
     const videoLocalPath=req.files?.videoFile[0]?.path
-    if(!videoLocalPath){
+    const thumbnailLocalPath=req.files?.thumbnail[0]?.path
+
+     if(!videoLocalPath){
         throw new ApiErrors(400,"The Video file doesn't exists")
     }
-
-    const video = await uploadOnCloudinay(videoLocalPath)
-    if(!video){
+  
+ if(!thumbnailLocalPath){
+        throw new ApiErrors(400,"The thumbnail file doesn't exists")
+    }
+    const videoFile = await uploadOnCloudinay(videoLocalPath)
+    const thumbnail =await uploadOnCloudinay(thumbnailLocalPath)
+    if(!videoFile){
         throw new ApiErrors(400,"Video is required")
     }
 
+     if(!thumbnail){
+        throw new ApiErrors(400,"Thumbnail is required")
+    }
     const videoDocument= await Video.create({
        videoTitle,
        description,
-       video:video.url,
+       duration,
+       thumbnail:thumbnail.url,
+       videoFile:videoFile.url,
     })
     /** checking Video uploaded succesfully or not */
     if(!videoDocument){
@@ -145,9 +152,9 @@ const getVideoById = asyncHandler(async(req,res)=>{
         throw new ApiErrors(400,"Invalid video Id")
     }
 
-    const video = await Video.findById(videoId)
+    const video =await Video.findById(videoId)
     if(!video){
-       throw new ApiErrors(404,"This video doesn't exist")
+        throw new ApiErrors(404,"video is not found")
     }
 
     return res
