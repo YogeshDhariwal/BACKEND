@@ -6,8 +6,10 @@ import { verifyJwt } from "../middlewares/auth.middleware.js";
 const router= Router();
 router.use(verifyJwt)
 
-router.route("/getVideoComments").get(getVideoComments)
-router.route("/:videoId").post(addComment)
+router
+.route("/:videoId")
+.get(getVideoComments)
+.post(addComment)
 
 router
 .route("/:commentId")

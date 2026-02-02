@@ -5,7 +5,6 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { Video } from "../models/video.model.js"
 
-import { user } from "../middlewares/auth.middleware.js"
 
 /** get vedio Comments */
 const getVideoComments=asyncHandler(async(req,res)=>{
@@ -17,11 +16,11 @@ const getVideoComments=asyncHandler(async(req,res)=>{
     const skip=(pageNumber-1)*limitNumber
 
     /**checking vedio is public or not */
-const video =await Video.findOne({
+const videoMatch =await Video.findOne({
     isPublished:true,
     _id:videoId
 })
-if(!video){
+if(!videoMatch){
     throw new ApiErrors(400,"Video not found")
 }
 
@@ -29,7 +28,7 @@ const comment =await Comment.aggregate([
     /** 1 Stage */
   {
     $match:{
-        video:new mongoose.Types.ObjectId(videoId)
+        atVideo:new mongoose.Types.ObjectId(videoId) 
     }
   },
   /** 2 stage */
@@ -41,7 +40,7 @@ const comment =await Comment.aggregate([
   /** 3  stage */
   {
   $facet:{
-    comment:[{$skip:skip},{$limit:limitNumber}],
+    comments:[{$skip:skip},{$limit:limitNumber}],
     totalCount:[{$count:"count"}]
   }
   }
@@ -54,10 +53,10 @@ const comment =await Comment.aggregate([
    .status(200)
    .json(
     new ApiResponse(200,{
-        comment,
-        totalComment,
-        pageNumber
-    },"All Comment fetched successfully")
+        comments:comment[0],
+        totalCount:totalComment,
+        page:pageNumber
+},"All Comment fetched successfully")
    )
 })
 
@@ -123,7 +122,7 @@ const deleteComment =asyncHandler(async(req,res)=>{
     throw new ApiErrors(404,"CommentID is required")
    }
 
-   const comment = await findById(commentId)
+   const comment = await Comment.findById(commentId)
    if(!comment){
     throw new ApiErrors(400,"comment not found")
    }
