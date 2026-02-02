@@ -4,7 +4,7 @@ import { ApiErrors } from "../utils/ApiErrors.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { Video } from "../models/video.model.js"
-import { getVideoById } from "./vedio.controller.js"
+
 import { user } from "../middlewares/auth.middleware.js"
 
 /** get vedio Comments */
@@ -117,7 +117,24 @@ return res
 
 /** delete comment */
 const deleteComment =asyncHandler(async(req,res)=>{
+   const {commentId} = req.params
 
+   if(!mongoose.Types.ObjectId.isValid(commentId)){
+    throw new ApiErrors(404,"CommentID is required")
+   }
+
+   const comment = await findById(commentId)
+   if(!comment){
+    throw new ApiErrors(400,"comment not found")
+   }
+
+   await Comment.deleteOne()
+
+   return res
+   .status(200)
+   .json(
+    new ApiResponse(200,{},"Comment deleted successfully")
+   )
 })
 
 export {
