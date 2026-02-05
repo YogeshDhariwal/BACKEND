@@ -6,7 +6,7 @@ import { Playlist} from "../models/playlist.model.js"
 
 /** get user playlist*/
 const getUserPlaylist =asyncHandler(async(req,res)=>{
-    const {userId }= req.params
+    const {userId} = req.params
 
     if(!mongoose.Types.ObjectId.isValid(userId)){
         throw new ApiErrors(400,"UserId is required or invalid id")
@@ -14,7 +14,9 @@ const getUserPlaylist =asyncHandler(async(req,res)=>{
 
     const userPlaylist = await Playlist.aggregate([
         {
-            $match:  new mongoose.Types.ObjectId(userId)
+             $match: { 
+             owner:new mongoose.Types.ObjectId(userId)
+            }    
             
         },
         /** 2 stage */
@@ -36,13 +38,13 @@ const getUserPlaylist =asyncHandler(async(req,res)=>{
 
          }
         },
-        {
-        $addFields:{
-            AboutVideos:{
-                $arrayElemAt:["$videoDetails",0]
-            }
-        }
-        },
+        // {
+        // $addFields:{
+        //     AboutVideos:{
+        //         $arrayElemAt:["$videoDetail",0]
+        //     }
+        // }
+        // },
         {
             $facet:{
                 Playlists:[],
@@ -129,16 +131,22 @@ const removeVideoFromPlaylist =asyncHandler(async(req,res)=>{
     throw new ApiErrors(400,"Invalid playlistID or VideoID")
    }
 
-   const playlistVideo = await Playlist.findOne({
+   const playlistVideo = await Playlist.findOneAndUpdate({
     _id:new mongoose.Types.ObjectId(playlistId),
-   video: new mongoose.Types.ObjectId(videoId)
-   })
+   },
+   {
+    $pull:{
+        video: new mongoose.Types.ObjectId(videoId)
+    }
+   },
+   {new:true}
+)
     if(!playlistVideo){
         throw new ApiErrors(404,"video is not found")
     }
-    await Playlist.deleteOne({
-        video:new mongoose.Types.ObjectId(videoId)
-    })
+    // await Playlist.deleteOne({
+    //     video:new mongoose.Types.ObjectId(videoId)
+    // })
 
     return res
     .status(200)
@@ -181,7 +189,7 @@ const updatePlaylist=asyncHandler(async(req,res)=>{
         throw new ApiErrors(400,"Name and description are required")
     }
 
-    const playlist = await Playlist.findByIdAndDelete(playlistId,{
+    const playlist = await Playlist.findByIdAndUpdate(playlistId,{
         $set:{
             name:newName,
             description:newDescription
