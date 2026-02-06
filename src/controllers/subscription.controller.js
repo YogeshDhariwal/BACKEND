@@ -29,8 +29,8 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
     )
      }
      else{
-        const subsciption = await findByIdAndDelete(
-           { subscriber:req.user._id}
+        const subsciption = await Subscription.findOneAndDelete(
+          { subscriber :new mongoose.Types.ObjectId(req.user._id)}
         )
         
         return res
@@ -59,7 +59,7 @@ const getUserChannelSubscriber= asyncHandler(async(req,res)=>{
         {
             $lookup:{
                 from:"users",
-                localField:"channel",
+                localField:"subscriber",
                 foreignField:"_id",
                 as:"Subscriber",
                 pipeline:[
@@ -97,8 +97,56 @@ const getUserChannelSubscriber= asyncHandler(async(req,res)=>{
 
 /** channel list of the which user has subscribed */
 
-const getSubscribedChannels = asyncHandler(async()=>{
+const getSubscribedChannels = asyncHandler(async(req,res)=>{
     const {subscriberId} = req.params
+
+    if(!mongoose.Types.ObjectId.isValid(subscriberId)){
+        throw new ApiErrors(400,"Invalid subscriberId")
+    }
+
+    const subscribedBy = await Subscription.aggregate([
+        {
+            $match:{
+                subscriber:new mongoose.Types.ObjectId(subscriberId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"channel",
+                foreignField:"_id",
+                as:"subscribedChannels",
+                pipeline:[
+                    {
+                        $project:{
+                            fullName:1,
+                            userName:1,
+                            email:1
+                        }
+                    }
+                ]
+            }
+
+        },
+        {
+            $facet:{
+                subscribedByYou:[],
+                totalCount:[{$count:"count"}]
+            }
+        }
+    ])
+
+    const totalCountSubscribedByYou = subscribedBy[0].totalCount[0]?.count ||0
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,[
+         subscribedBy[0],
+         totalCountSubscribedByYou
+        ],
+        "All channel that you subscribed by you is fetched successfully"
+    )
+    )
 })
 
 export {
