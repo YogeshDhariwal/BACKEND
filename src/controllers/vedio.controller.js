@@ -4,7 +4,6 @@ import { User } from "../models/user.model.js"
 import { ApiErrors } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinay } from "../utils/cloudinary.js";
-import jwt from "jsonwebtoken";
 import mongoose, { set } from "mongoose";
 
 /** get all Videos */
